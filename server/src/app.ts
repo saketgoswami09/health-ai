@@ -1,19 +1,18 @@
-import express, { Application } from 'express';
-import cors from 'cors';
-import { config } from './config/env';
-import healthRoutes from './routes/healthRoutes';
-import { errorHandler } from './middleware/errorHandler';
+import express from "express";
+import cors from "cors";
+import { env } from "./config/env";
+import elevenLabsRouter from "./routes/elevenLabsRoutes";
+import healthRouter from "./routes/healthRoutes";
+import { errorHandler } from "./middleware/errorHandler";
 
-const app: Application = express();
+export const app = express();
 
-// Middleware
-app.use(cors({ origin: config.clientUrl }));
+app.use(cors({ origin: env.clientUrl }));
 app.use(express.json());
+app.use("/api/elevenlabs", elevenLabsRouter);
+app.use("/api", healthRouter);
 
-// Routes
-app.use('/api', healthRoutes);
-
-// Error Handling
+app.get("/health", (_req, res) => {
+  res.json({ status: "ok" });
+});
 app.use(errorHandler);
-
-export default app;

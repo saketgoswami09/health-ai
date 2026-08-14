@@ -15,7 +15,7 @@ export interface ConversationSession {
 
 export interface HealthSymptom {
   name: string;
-  severity: 'mild' | 'moderate' | 'severe';
+  severity: 'mild' | 'moderate' | 'severe' | 'not discussed';
   duration: string;
 }
 

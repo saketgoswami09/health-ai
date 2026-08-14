@@ -1,28 +1,11 @@
-import React, { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Home } from './pages/Home';
 import { VoiceCall } from './pages/VoiceCall';
 import { ReportPage } from './pages/Report';
 import { LoadingState } from './components/LoadingState';
-import { ErrorState } from './components/ErrorState';
+import { VoiceService } from './services/voiceService';
+import { generateHealthReport } from './services/api';
 import type { VoiceCallState, ConversationMessage, HealthReport } from './types';
-
-// Mock API Call (To be replaced with actual fetch to backend)
-const generateMockReport = async (): Promise<HealthReport> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        mainConcern: "General Checkup",
-        symptoms: [
-          { name: "Headache", severity: "mild", duration: "2 days" }
-        ],
-        duration: "10 minutes",
-        severity: "low",
-        additionalDetails: ["Patient reported feeling tired."],
-        followUp: "Rest and drink fluids."
-      });
-    }, 2000);
-  });
-};
 
 function App() {
   const [currentView, setCurrentView] = useState<'home' | 'call' | 'generating' | 'report'>('home');
@@ -32,42 +15,71 @@ function App() {
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [report, setReport] = useState<HealthReport | null>(null);
 
+  const voiceServiceRef = useRef<VoiceService | null>(null);
+  const sessionIdRef = useRef<string | null>(null);
+
   const handleStartCall = () => {
+    setMessages([]);
+    sessionIdRef.current = crypto.randomUUID();
     setCurrentView('call');
     setCallState('connecting');
 
-    // Simulate connection delay
-    setTimeout(() => {
-      setCallState('active');
-      setIsAiThinking(true);
-
-      // Simulate thinking delay
-      setTimeout(() => {
-        setIsAiThinking(false);
+    const service = new VoiceService({
+      onStateChange: (state) => setCallState(state),
+      onSpeechStarted: () => {
         setIsAiSpeaking(true);
+        setIsAiThinking(false);
+      },
+      onSpeechStopped: () => {
+        setIsAiSpeaking(false);
+      },
+      onTranscriptDelta: (role, text) => {
+        setMessages((prev) => {
+          const newMessages = [...prev];
+          const lastMsg = newMessages[newMessages.length - 1];
+          if (lastMsg && lastMsg.role === role) {
+            lastMsg.content = text;
+          } else {
+            newMessages.push({ id: Date.now().toString(), role, content: text, timestamp: new Date() });
+          }
+          return newMessages;
+        });
+      },
+      onTranscriptDone: (role, text) => {
+        setMessages((prev) => {
+          const newMessages = [...prev];
+          const lastMsg = newMessages[newMessages.length - 1];
+          if (lastMsg && lastMsg.role === role) {
+            lastMsg.content = text;
+          } else {
+            newMessages.push({ id: Date.now().toString(), role, content: text, timestamp: new Date() });
+          }
+          return newMessages;
+        });
+      },
+      onError: (error) => {
+        console.error("Voice Error:", error);
+      }
+    });
 
-        // Simulate AI speaking
-        setTimeout(() => {
-          setMessages([{
-            id: '1',
-            role: 'assistant',
-            content: 'Hello, I am your AI Health Assistant. What brings you here today?',
-            timestamp: new Date()
-          }]);
-          setIsAiSpeaking(false);
-        }, 3000);
-      }, 2000); // 2 second think time
-
-    }, 1500);
+    voiceServiceRef.current = service;
+    service.startCall();
   };
 
   const handleEndCall = async () => {
+    if (voiceServiceRef.current) {
+      await voiceServiceRef.current.endCall();
+      voiceServiceRef.current = null;
+    }
+
     setCallState('completed');
     setCurrentView('generating');
 
     try {
-      // TODO: Replace with actual backend call
-      const generatedReport = await generateMockReport();
+      const generatedReport = await generateHealthReport({
+        sessionId: sessionIdRef.current ?? crypto.randomUUID(),
+        conversationData: messages,
+      });
       setReport(generatedReport);
       setCurrentView('report');
     } catch (error) {
@@ -79,6 +91,7 @@ function App() {
   const handleNewAssessment = () => {
     setCallState('idle');
     setMessages([]);
+    sessionIdRef.current = null;
     setReport(null);
     setCurrentView('home');
   };

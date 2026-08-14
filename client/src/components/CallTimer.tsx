@@ -8,7 +8,7 @@ export const CallTimer: React.FC<Props> = ({ isActive }) => {
   const [seconds, setSeconds] = useState(0);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: ReturnType<typeof setInterval> | undefined;
     
     if (isActive) {
       interval = setInterval(() => {

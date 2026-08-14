@@ -1,131 +1,127 @@
-# AI Health Assistant Boilerplate
+# Health AI Voice Screening
 
-## 1. Project Overview
+A React and Node.js application for a short, live AI health-screening call. The user speaks to an ElevenLabs Conversational AI agent, then receives a structured report based on the captured conversation.
 
-This is a technical assessment boilerplate for a **Conversational AI Health-Screening Application**. It provides a clean, monorepo-style foundation with a React/Vite/TypeScript frontend and a Node.js/Express/TypeScript backend. 
+## What it does
 
-The goal of this application is to allow users to have a live voice conversation with an AI agent. After the call concludes, the system generates a structured, actionable health report based on the conversation.
+- Starts and ends a real-time browser voice conversation.
+- Uses ElevenLabs Conversational AI over WebRTC for microphone input, speech-to-text, agent reasoning, and speech output.
+- Shows the conversation transcript in the call UI.
+- Generates a structured health report after the call ends.
+- Handles incomplete calls safely with `Not discussed` values rather than inventing information.
+- Flags a small set of potentially urgent symptoms with an urgent-care recommendation.
 
-## 2. Architecture
-
-This project uses a decoupled frontend-backend architecture:
-
-- **Client**: A single-page application built with React and Vite. It handles the UI for starting the call, displaying real-time voice status, and rendering the final health report.
-- **Server**: A REST API built with Express. It will act as the orchestrator, communicating with the OpenAI Realtime API for the conversation, and the standard OpenAI text models to generate the final report.
-
-## 3. Tech Stack
-
-### Frontend
-- React 18
-- TypeScript
-- Vite
-- Tailwind CSS
-- Lucide React (Icons)
-
-### Backend
-- Node.js
-- Express
-- TypeScript
-- CORS / Dotenv
-
-## 4. Folder Structure
+## Architecture
 
 ```text
-health-ai/
-├── client/                 # React frontend
-│   ├── src/
-│   │   ├── components/     # Reusable UI components
-│   │   ├── pages/          # Full page layouts (Home, VoiceCall, Report)
-│   │   ├── services/       # API clients and external integrations
-│   │   ├── types/          # Shared TypeScript interfaces
-│   │   ├── App.tsx         # Main application flow
-│   │   └── main.tsx
-│   ├── package.json
-│   └── tailwind.config.js
-│
-├── server/                 # Express backend
-│   ├── src/
-│   │   ├── config/         # Environment variables configuration
-│   │   ├── controllers/    # Request handlers
-│   │   ├── middleware/     # Custom Express middleware (Error handling)
-│   │   ├── routes/         # Express router definitions
-│   │   ├── services/       # Core business logic (AI, Realtime, Reports)
-│   │   ├── types/          # Shared TypeScript interfaces
-│   │   ├── utils/          # Utilities (Logger)
-│   │   ├── app.ts          # Express application setup
-│   │   └── server.ts       # Server entry point
-│   ├── package.json
-│   └── tsconfig.json
-│
-├── .env.example
-├── package.json            # Root scripts
-└── README.md
+Browser (React)
+  -> Node.js token endpoint
+  -> ElevenLabs Conversational AI Agent (WebRTC)
+  -> transcript captured in React
+  -> Node.js POST /api/reports
+  -> structured health report
 ```
 
-## 5. Local Setup Instructions
+The ElevenLabs API key stays on the Node.js server. The browser receives only a short-lived conversation token.
 
-1. **Clone the repository.**
-2. **Install Frontend Dependencies:**
-   ```bash
-   cd client
-   npm install
-   ```
-3. **Install Backend Dependencies:**
-   ```bash
-   cd ../server
-   npm install
-   ```
+## Tech stack
 
-## 6. Environment Variables
+- Frontend: React, TypeScript, Vite, Tailwind CSS
+- Backend: Node.js, Express, TypeScript
+- Voice provider: ElevenLabs Conversational AI (`@elevenlabs/client`)
 
-Create a `.env` file in the root `health-ai` directory (or copy `.env.example`) and configure the following:
+## Prerequisites
+
+- Node.js 20 or later
+- An ElevenLabs account
+- An ElevenLabs Conversational AI agent
+- An ElevenLabs API key with `convai_write` permission
+
+## Setup
+
+Install dependencies:
+
+```bash
+cd client
+npm install
+
+cd ../server
+npm install
+```
+
+Create `server/.env` from the root `.env.example`:
 
 ```env
 PORT=5000
 CLIENT_URL=http://localhost:5173
-OPENAI_API_KEY=your_actual_openai_api_key_here
+ELEVENLABS_API_KEY=your_elevenlabs_api_key_here
+ELEVENLABS_AGENT_ID=agent_your_agent_id_here
 ```
 
-*Note: Never commit your `.env` file or expose your API key on the React frontend.*
+Never commit the `.env` file or expose the API key in the frontend.
 
-## 7. How to run frontend
+## Configure the ElevenLabs agent
 
-Navigate to the `client` directory and start the Vite dev server:
+Create an agent in the ElevenLabs dashboard and set its prompt to conduct a brief health intake. It should:
 
-```bash
-cd client
-npm run dev
-```
+1. Greet the user and ask one question at a time.
+2. Collect their name, main concern, duration, severity, and related symptoms.
+3. Ask relevant follow-up questions when an answer is unclear.
+4. Avoid diagnosing or prescribing treatment.
+5. Tell users to contact local emergency services if they describe an emergency.
 
-## 8. How to run backend
+Use the resulting `agent_...` value as `ELEVENLABS_AGENT_ID`.
 
-Navigate to the `server` directory and start the Nodemon dev server:
+## Run locally
+
+Start the backend:
 
 ```bash
 cd server
 npm run dev
 ```
 
-*(Alternatively, you can run `npm run start` in the root `health-ai` folder if the root `package.json` scripts are set up).*
+In another terminal, start the frontend:
 
-## 9. Planned AI / Voice Pipeline
-
-The eventual implementation flow:
-
-**During the Call:**
-```text
-User Microphone -> WebRTC/WebSocket -> Node.js Backend -> OpenAI Realtime API -> AI Voice Response -> User Speaker
+```bash
+cd client
+npm run dev
 ```
 
-**After the Call:**
-```text
-Conversation Transcript -> reportService (Node.js) -> OpenAI GPT-4o (Structured JSON) -> React UI (HealthReportComponent)
+Open the Vite URL shown in the terminal, usually `http://localhost:5173`.
+
+## API endpoints
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| `GET` | `/health` | Backend health check |
+| `GET` | `/api/elevenlabs/conversation-token` | Creates a short-lived token for the browser voice session |
+| `POST` | `/api/reports` | Creates a structured report from conversation messages |
+
+Example report request:
+
+```json
+{
+  "sessionId": "session-id",
+  "conversationData": [
+    {
+      "id": "1",
+      "role": "user",
+      "content": "I have had a severe headache for two days.",
+      "timestamp": "2026-08-14T00:00:00.000Z"
+    }
+  ]
+}
 ```
 
-## 10. Future Implementation Steps (Next Priorities)
+## Report behavior
 
-1. **`client/src/services/voiceService.ts`**: Implement the WebRTC connection logic to stream audio from the user's microphone.
-2. **`server/src/services/realtimeService.ts`**: Implement the WebSocket connection to the OpenAI Realtime API.
-3. **`server/src/services/reportService.ts` & `aiService.ts`**: Send the conversation transcript to the OpenAI completions endpoint to generate a JSON-structured health report.
-4. **`client/src/pages/VoiceCall.tsx`**: Hook up the real voice service to the UI state instead of using mock timeouts.
-# health-ai
+The report service processes the user transcript into main concern, symptoms, duration, severity, supporting details, and follow-up guidance. It uses conservative extraction logic, so missing information is represented as `Not discussed`. This prevents the application from filling gaps with made-up clinical facts.
+
+## Limitations and next improvements
+
+- The current report extraction is deterministic. A dedicated LLM with validated structured output would produce richer summaries.
+- The report is a screening summary, not a diagnosis or medical advice.
+- Add visible retry/error states for microphone, connection, and report failures.
+- Add automated tests for report extraction and API routes.
+- Configure Hindi or multilingual handling in the ElevenLabs agent for language support.

@@ -5,9 +5,14 @@ export interface ConversationMessage {
   timestamp: Date;
 }
 
+export interface ReportRequest {
+  sessionId: string;
+  conversationData: ConversationMessage[];
+}
+
 export interface HealthSymptom {
   name: string;
-  severity: 'mild' | 'moderate' | 'severe';
+  severity: 'mild' | 'moderate' | 'severe' | 'not discussed';
   duration: string;
 }
 

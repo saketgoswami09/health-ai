@@ -1,17 +1,8 @@
-import app from './app';
-import { config } from './config/env';
-import { logger } from './utils/logger';
+import { app } from "./app";
+import { env } from "./config/env";
+import { logger } from "./utils/logger";
 
-const startServer = () => {
-  try {
-    app.listen(config.port, () => {
-      logger.info(`Server is running on port ${config.port}`);
-      logger.info(`Accepting requests from client at ${config.clientUrl}`);
-    });
-  } catch (error) {
-    logger.error('Failed to start server:', error);
-    process.exit(1);
-  }
-};
-
-startServer();
+app.listen(env.port, () => {
+  logger.info(`Server listening on port ${env.port}`);
+  logger.info(`ElevenLabs token endpoint: http://localhost:${env.port}/api/elevenlabs/conversation-token`);
+});
