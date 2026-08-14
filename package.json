@@ -1,0 +1,10 @@
+{
+  "name": "health-ai",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "npm run start:client & npm run start:server",
+    "start:client": "cd client && npm run dev",
+    "start:server": "cd server && npm run dev"
+  }
+}
