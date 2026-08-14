@@ -1,5 +1,6 @@
-import React from 'react';
-import type { VoiceCallState } from '../types';
+import React from "react";
+import type { VoiceCallState } from "../types";
+import { VoiceOrb } from "./VoiceOrb";
 
 interface Props {
   state: VoiceCallState;
@@ -7,40 +8,51 @@ interface Props {
   isAiThinking?: boolean;
 }
 
-export const VoiceStatus: React.FC<Props> = ({ state, isAiSpeaking, isAiThinking }) => {
-  let orbState = 'idle';
-  let statusText = 'Ready to start';
+export const VoiceStatus: React.FC<Props> = ({
+  state,
+  isAiSpeaking,
+  isAiThinking,
+}) => {
+  let orbState:
+    | "idle"
+    | "connecting"
+    | "listening"
+    | "thinking"
+    | "speaking"
+    | "error" = "idle";
 
-  if (state === 'connecting') {
-    orbState = 'connecting';
-    statusText = 'Connecting to AI...';
-  } else if (state === 'active') {
+  if (state === "connecting") {
+    orbState = "connecting";
+  } else if (state === "active") {
     if (isAiSpeaking) {
-      orbState = 'speaking';
-      statusText = 'AI is speaking...';
+      orbState = "speaking";
     } else if (isAiThinking) {
-      orbState = 'thinking';
-      statusText = 'AI is thinking...';
+      orbState = "thinking";
     } else {
-      orbState = 'listening';
-      statusText = 'Listening...';
+      orbState = "listening";
     }
-  } else if (state === 'completed') {
-    orbState = 'idle';
-    statusText = 'Assessment complete';
-  } else if (state === 'error') {
-    orbState = 'idle';
-    statusText = 'Connection error';
+  } else if (state === "error") {
+    orbState = "error";
   }
 
   return (
-    <div className="flex flex-col items-center gap-6 my-8">
-      <div className="orb-container">
-        <div className="orb" data-state={orbState}></div>
-      </div>
-      <div className="text-lg font-medium text-gray-700">
-        {statusText}
-      </div>
+    <div className="flex flex-col items-center">
+      <VoiceOrb state={orbState} />
+
+      {/* Only show status AFTER call starts */}
+      {state !== "idle" && (
+        <div className="mt-5 text-sm font-medium text-slate-500">
+          {state === "connecting"
+            ? "Connecting to Radha..."
+            : isAiSpeaking
+            ? "Radha is speaking..."
+            : isAiThinking
+            ? "Radha is thinking..."
+            : state === "error"
+            ? "Something went wrong"
+            : "Listening..."}
+        </div>
+      )}
     </div>
   );
 };

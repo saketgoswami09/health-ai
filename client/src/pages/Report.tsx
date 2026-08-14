@@ -1,26 +1,76 @@
-import React from 'react';
-import { HealthReportComponent } from '../components/HealthReportComponent';
-import type { HealthReport } from '../types';
+import React from "react";
+import { ArrowLeft, Plus } from "lucide-react";
+
+import { HealthReportComponent } from "../components/HealthReportComponent";
+import type { HealthReport } from "../types";
 
 interface Props {
   report: HealthReport;
   onNewAssessment: () => void;
 }
 
-export const ReportPage: React.FC<Props> = ({ report, onNewAssessment }) => {
+export const ReportPage: React.FC<Props> = ({
+  report,
+  onNewAssessment,
+}) => {
   return (
-    <div className="max-w-4xl mx-auto w-full px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Your Results</h1>
+    <main className="min-h-[calc(100vh-64px)] bg-[#f8fafc]">
+
+      {/* Top actions */}
+      <div className="mx-auto flex w-full max-w-4xl items-center justify-between px-4 pt-6 sm:px-6">
+
         <button
           onClick={onNewAssessment}
-          className="text-blue-600 hover:text-blue-800 font-medium px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors"
+          className="
+            group
+            flex items-center gap-2
+            rounded-lg
+            px-3 py-2
+            text-sm font-medium
+            text-slate-500
+            transition-all
+            hover:bg-white
+            hover:text-slate-900
+            hover:shadow-sm
+          "
         >
-          New Assessment
+          <ArrowLeft
+            size={16}
+            className="transition-transform group-hover:-translate-x-0.5"
+          />
+
+          New assessment
         </button>
+
+        <button
+          onClick={onNewAssessment}
+          className="
+            hidden sm:flex
+            items-center gap-2
+            rounded-lg
+            border border-slate-200
+            bg-white
+            px-3 py-2
+            text-sm font-medium
+            text-slate-600
+            shadow-sm
+            transition-all
+            hover:border-slate-300
+            hover:text-slate-900
+            hover:shadow
+          "
+        >
+          <Plus size={16} />
+
+          Start again
+        </button>
+
       </div>
-      
+
       <HealthReportComponent report={report} />
-    </div>
+
+    </main>
   );
 };
+
+export default ReportPage;

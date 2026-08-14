@@ -27,16 +27,26 @@ export class VoiceService {
     try {
       await navigator.mediaDevices.getUserMedia({ audio: true });
 
-      const response = await fetch(`${apiBaseUrl}/elevenlabs/conversation-token`);
-      if (!response.ok) throw new Error("Could not create an ElevenLabs conversation.");
+      const response = await fetch(
+        `${apiBaseUrl}/elevenlabs/conversation-token`,
+      );
+      if (!response.ok)
+        throw new Error("Could not create an ElevenLabs conversation.");
 
-      const { conversationToken } = (await response.json()) as { conversationToken?: string };
-      if (!conversationToken) throw new Error("The server returned no conversation token.");
+      const { conversationToken } = (await response.json()) as {
+        conversationToken?: string;
+      };
+      if (!conversationToken)
+        throw new Error("The server returned no conversation token.");
 
       const conversation = await Conversation.startSession({
         conversationToken,
-        onConnect: () => this.callbacks.onStateChange("active"),
+        onConnect: () => {
+  console.log("🟢 ELEVENLABS CONNECTED");
+  this.callbacks.onStateChange("active");
+},
         onDisconnect: () => {
+          console.log("🔥 ELEVENLABS DISCONNECTED");
           this.conversation = null;
           this.callbacks.onStateChange("completed");
         },
@@ -45,7 +55,8 @@ export class VoiceService {
           else this.callbacks.onSpeechStopped();
         },
         onMessage: ({ role, message }) => {
-          const mappedRole: ConversationMessage["role"] = role === "agent" ? "assistant" : "user";
+          const mappedRole: ConversationMessage["role"] =
+            role === "agent" ? "assistant" : "user";
           this.callbacks.onTranscriptDone(mappedRole, message);
         },
         onError: (message) => {
@@ -56,7 +67,10 @@ export class VoiceService {
 
       this.conversation = conversation as VoiceConversation;
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to start the voice call.";
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to start the voice call.";
       this.callbacks.onError(message);
       this.callbacks.onStateChange("error");
     }
