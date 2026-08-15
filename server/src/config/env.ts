@@ -17,7 +17,5 @@ export const env = {
   elevenLabsAgentId: required("ELEVENLABS_AGENT_ID"),
   // Retained temporarily for the unused OpenAI service while the project is
   // migrated to ElevenLabs. It is no longer required to run the server.
-  openaiApiKey: process.env.OPENAI_API_KEY ?? "",
-  realtimeModel: process.env.OPENAI_REALTIME_MODEL ?? "gpt-4o-realtime-preview-2024-12-17",
-  reportModel: process.env.OPENAI_REPORT_MODEL ?? "gpt-4o",
+
 };
